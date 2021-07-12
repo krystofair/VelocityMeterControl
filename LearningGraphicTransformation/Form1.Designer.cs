@@ -37,11 +37,11 @@ namespace LearningGraphicTransformation
             // vMeter1
             // 
             this.vMeter1.BackColor = System.Drawing.Color.Black;
-            this.vMeter1.LoadExtra = false;
-            this.vMeter1.Location = new System.Drawing.Point(27, 38);
+            this.vMeter1.LoadExtra = true;
+            this.vMeter1.Location = new System.Drawing.Point(44, 34);
             this.vMeter1.LocationDir = "D:\\LearningGraphicTransformation\\LearningGraphicTransformation\\vmet-mat";
             this.vMeter1.Name = "vMeter1";
-            this.vMeter1.Size = new System.Drawing.Size(613, 613);
+            this.vMeter1.Size = new System.Drawing.Size(556, 556);
             this.vMeter1.TabIndex = 0;
             this.vMeter1.Text = "vMeter1";
             // 

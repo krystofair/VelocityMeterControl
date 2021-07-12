@@ -79,13 +79,16 @@ namespace LearningGraphicTransformation
                 float sx = (this.Size.Width / (float)base_bp.Width) * base_bp.Width;
                 float sy = (this.Size.Width / (float)base_bp.Height) * base_bp.Height;
                 _img_files.Add(new Bitmap(base_bp, new Size((int)sx, (int)sy)));
+                base_bp.Dispose();
                 if (_load_extra)
                 {
-                    Bitmap extra_bp = new Bitmap(Image.FromFile(path + _img_names[1]));
-                    _img_files.Add(new Bitmap(extra_bp, new Size((int)sx, (int)sy)));
+                    _img_files.Add(
+                        new Bitmap(Image.FromFile(path + _img_names[1]), new Size((int)sx, (int)sy))
+                        );
                 }
-                Bitmap pointer_bp = new Bitmap(Image.FromFile(path + _img_names[2]));
-                _img_files.Add(new Bitmap(pointer_bp, new Size((int)sx, (int)sy)));
+                _img_files.Add(
+                        new Bitmap(Image.FromFile(path + _img_names[2]), new Size((int)sx, (int)sy))
+                        );
             }
             catch
             {
