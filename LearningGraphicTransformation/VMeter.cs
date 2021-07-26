@@ -47,10 +47,10 @@ namespace LearningGraphicTransformation
         }
         private void OnExtraChanged(object sender, PropertyChangedEventArgs e)
         {
-            OnLocationDirChanged(sender, e);
+            LoadImagesWithSpecifiedSize();
         }
 
-        private void OnLocationDirChanged(object sender, PropertyChangedEventArgs e)
+        private void LoadImagesWithSpecifiedSize()
         {
             _img_files.Clear();
             try
@@ -85,18 +85,19 @@ namespace LearningGraphicTransformation
         {
             base.OnSizeChanged(e);
             this.Size = new Size(this.Size.Width, this.Size.Width); // potem poprawić.
-            OnLocationDirChanged(this, new PropertyChangedEventArgs("LocationDir"));
+            LoadImagesWithSpecifiedSize();
             Invalidate();
         }
 
         protected override void OnPaint(PaintEventArgs pe)
         {
             base.OnPaint(pe);
+            Rectangle clip_rect = pe.ClipRectangle;
             try
             {
                 if (_img_files.Count >= 1)
                 {
-                    pe.Graphics.DrawImage(_img_files[0], 0, 0);//Size.Width/2, Size.Height/2);
+                    pe.Graphics.DrawImage(_img_files[0], 0,0);//Size.Width/2, Size.Height/2);
                     if (_load_extra) pe.Graphics.DrawImage(_img_files[1], 0, 0);
                     pe.Graphics.TranslateTransform(this.ClientRectangle.Width / 2, this.ClientRectangle.Height / 2);
                     pe.Graphics.RotateTransform(where);
