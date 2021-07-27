@@ -5,6 +5,8 @@ using System.Data;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
+using System.Drawing.Imaging;
 
 namespace LearningGraphicTransformation
 {
@@ -12,8 +14,10 @@ namespace LearningGraphicTransformation
     {
         private List<Bitmap> _img_files = new List<Bitmap>();
         public event PropertyChangedEventHandler ExtraChange;
-        private bool _load_extra=false;
-        private float where=0;
+        private bool _load_extra = false;
+        private Point ptr_pos;
+        private Point middle_pos;
+        private float where = 0;
 
         public bool LoadExtra
         {
@@ -47,7 +51,6 @@ namespace LearningGraphicTransformation
         }
         private void OnExtraChanged(object sender, PropertyChangedEventArgs e)
         {
-            LoadImagesWithSpecifiedSize();
         }
 
         private void LoadImagesWithSpecifiedSize()
@@ -62,17 +65,17 @@ namespace LearningGraphicTransformation
                 base_bp.Dispose();
                 if (_load_extra)
                 {
-                    _img_files.Add(
-                        new Bitmap(Properties.Resources.middle, new Size(sx, sy))
-                        );
+                    base_bp = new Bitmap(Properties.Resources.middle, new Size(sx, sy));
+                    middle_pos = CropBMPToNoAlpha(ref base_bp);
+                    _img_files.Add(base_bp);
                 }
-                _img_files.Add(
-                        new Bitmap(Properties.Resources.pointer, new Size(sx, sy))
-                        );
+                base_bp = new Bitmap(Properties.Resources.pointer, new Size(sx, sy));
+                ptr_pos = CropBMPToNoAlpha(ref base_bp);
+                _img_files.Add(base_bp);
             }
-            catch
+            catch (Exception e)
             {
-                Console.WriteLine("Error with found images.");
+                Debug.WriteLine("[DEBUG] " + e.Message);
             }
         }
         public void ChangePos(int v)
@@ -97,11 +100,11 @@ namespace LearningGraphicTransformation
             {
                 if (_img_files.Count >= 1)
                 {
-                    pe.Graphics.DrawImage(_img_files[0], 0,0);//Size.Width/2, Size.Height/2);
-                    if (_load_extra) pe.Graphics.DrawImage(_img_files[1], 0, 0);
+                    pe.Graphics.DrawImage(_img_files[0], 0, 0);//Size.Width/2, Size.Height/2);
+                    if (_load_extra) pe.Graphics.DrawImage(_img_files[1], middle_pos.X, middle_pos.Y);
                     pe.Graphics.TranslateTransform(this.ClientRectangle.Width / 2, this.ClientRectangle.Height / 2);
                     pe.Graphics.RotateTransform(where);
-                    pe.Graphics.DrawImage(_img_files[^1], -1 * this.ClientRectangle.Width / 2, -1 * this.ClientRectangle.Height / 2);
+                    pe.Graphics.DrawImage(_img_files[^1], - this.ClientRectangle.Width / 2 + ptr_pos.X, -this.ClientRectangle.Height / 2 + ptr_pos.Y);
                 }
             }
             catch
@@ -109,57 +112,72 @@ namespace LearningGraphicTransformation
             }
         }
         /* Function which optimize size of needed bitmap 
-         * Here is process of deleting alpha channel from image. */
-        protected void ChangeBMPToNoAlpha(ref Bitmap b)
+         * Here is process of deleting alpha channel from image.
+         * The pointer cannot be too thin */
+        public Point CropBMPToNoAlpha(ref Bitmap bmp, int alpha_boundary = 64)
         {
-            // Pixel to obtain color from.
-            Color pix_col;
+            if (alpha_boundary > 254 || alpha_boundary < 16) return new Point(-1, -1);
             // Rectangle to specify area of pointer;
             Rectangle rec;
             // Checking if bitmap has a properly format.
-            // It has to be 32bppArgb, cause we're searching transparency value.
-            if (b.PixelFormat == System.Drawing.Imaging.PixelFormat.Format32bppArgb)
-            {
-                // Algorithm depends on finding left top, and right bottom corner of "arrow".
-                bool new_scanline = false;
-                Point p_top = new Point(b.Width, -1);
-                Point p_bot = new Point(-1, -1);
-                for (int r = 0; r < b.Height; ++r)
-                {
-                    new_scanline = true;
-                    for (int c = 0; c < b.Width; ++c)
+            // It has to be 32bppArgb, cause we're searching transparency value
+            if (bmp.PixelFormat == PixelFormat.Format16bppArgb1555 || bmp.PixelFormat == PixelFormat.Format32bppArgb
+                || bmp.PixelFormat == PixelFormat.Format32bppPArgb|| bmp.PixelFormat == PixelFormat.Format64bppArgb
+                || bmp.PixelFormat == PixelFormat.Format64bppPArgb ) {
+                    try {
+                    int top_x = bmp.Width, top_y = bmp.Height, bot_x = 0, bot_y = 0;
+                    for (int x = 0; x < bmp.Width; ++x)
                     {
-                        pix_col = b.GetPixel(c, r);
-                        if (pix_col.A < 128)
+                        // creating list of pixels of one column
+                        for (int y = 0; y < bmp.Height; ++y)
                         {
-                            if (new_scanline)
+                            // check boundary condition
+                            if (bmp.GetPixel(x, y).A > alpha_boundary)
                             {
-                                if (p_top.Y == -1) p_top.Y = r;
-                                if (c < p_top.X) p_top.X = c;
-                                new_scanline = false;
-                            }
-                        }
-                        else
-                        {
-                            if (!new_scanline)
-                            {
-                                if (p_bot.Y < r) p_bot.Y = r;
-                                if (p_bot.X < c) p_bot.X = c;
+                                if (top_y > y)
+                                    top_y = y;
+                                if (bot_y < y)
+                                    bot_y = y;
                             }
                         }
                     }
+                    // scanning now for rows but with boundary, which are counted above.
+                    for (int y = top_y; y < bot_y; ++y)
+                    {
+                        // creating list of pixels of one column
+                        for (int x = 0; x < bmp.Height; ++x)
+                        {
+                            // check boundary condition
+                            if (bmp.GetPixel(x, y).A > alpha_boundary) // noalpha_pixels.Add(new Point(x, y));
+                            {
+                                if (top_x > x)
+                                    top_x = x;
+                                if (bot_x < x)
+                                    bot_x = x;
+                            }
+                        }
+                    }
+                    var p_top = new Point(top_x, top_y);
+                    var p_bot = new Point(bot_x, bot_y);
+                    rec = new Rectangle(p_top, new Size(p_bot.X - p_top.X, p_bot.Y - p_top.Y));
+                    if (rec.Width <= 0 || rec.Height <= 0)
+                    {
+                        Debug.WriteLine("[ERROR] It doesn't find pointer, change value of boundary searching alpha or " +
+                            "modify original bitmap of pointer file.");
+                    }
+                    else
+                    {
+                        bmp = bmp.Clone(rec, bmp.PixelFormat);
+                    }
+                    return p_top;
                 }
-                //pointer_position = p_top;
-                rec = new Rectangle(p_top, new Size(p_bot.X - p_top.X, p_bot.Y - p_top.Y));
-                if (rec.Width == 0 || rec.Height == 0)
-                    throw new Exception("It doesn't find pointer, change value of boundary searching alpha or " +
-                        "modify original bitmap of pointer file.");
-                b = b.Clone(rec, b.PixelFormat);
+                catch (Exception e) { Debug.WriteLine(e.Message); }
             }
             else
             {
-                throw new Exception("File of pointer should be 32bpp format.");
+                throw new Exception("File of pointer must be in format with Alpha");
             }
+            return new Point(-1, -1);
         }
     }
 }
