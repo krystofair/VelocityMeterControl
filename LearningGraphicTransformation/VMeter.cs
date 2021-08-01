@@ -17,7 +17,17 @@ namespace LearningGraphicTransformation
         private bool _load_extra = false;
         private Point ptr_pos;
         private Point middle_pos;
+        private Rectangle OldRectangle;
         private float where = 0;
+
+        public void SetPosition(float value)
+        {
+            Invalidate(OldRectangle);
+            where = value % 360;
+            OldRectangle = CalcDrawingRectangle();
+            //Invalidate(OldRectangle);
+        }
+
 
         public bool LoadExtra
         {
@@ -78,38 +88,91 @@ namespace LearningGraphicTransformation
                 Debug.WriteLine("[DEBUG] " + e.Message);
             }
         }
-        public void ChangePos(int v)
+        protected Rectangle CalcDrawingRectangle()
         {
-            where = v;
-            Invalidate();
-        }
+            if (_img_files.Count < 2) return ClientRectangle;
+            Rectangle re;
+            double w = _img_files[^1].Width;
+            double h = _img_files[^1].Height;
+            // the origin coordinates.
+            double x0 = ClientRectangle.Width/2;
+            double y0 = ClientRectangle.Height/2;
 
+            // points to rotate with normalization
+            double[,] points = {
+                { ptr_pos.X-x0, ptr_pos.Y-y0 },
+                { ptr_pos.X-x0, ptr_pos.Y+h-y0 },
+                { ptr_pos.X+w-x0, ptr_pos.Y-y0 },
+                { ptr_pos.X+h-x0, ptr_pos.Y+h-y0 }
+            };
+            List<double> xs = new List<double>();
+            List<double> ys = new List<double>();
+
+            for (int i = 0; i < 4; ++i)
+            {
+                // calc points after rotations and moves.
+                xs.Add(points[i, 0] * Math.Cos(where/10) + points[i, 1] * Math.Sin(where/10));
+                ys.Add(points[i, 0] * Math.Sin(where/10) - points[i, 1] * Math.Cos(where/10));
+                xs[^1] += x0;
+                ys[^1] += y0;
+            }
+            xs.Sort();
+            ys.Sort();
+            // clip rectangle to return.
+            re = new Rectangle((int)xs[0], (int)ys[0], (int)Math.Abs(xs[^1] - xs[0]), (int)Math.Abs(ys[^1] - ys[0]));
+
+            using (Pen p = new Pen(Brushes.Yellow, 2))
+            {
+                var g = CreateGraphics();
+                g.DrawRectangle(p, re);
+                Debug.WriteLine(re.ToString());
+                g.Dispose();
+            }
+            return re;
+        }
         protected override void OnSizeChanged(EventArgs e)
         {
             base.OnSizeChanged(e);
             this.Size = new Size(this.Size.Width, this.Size.Width); // potem poprawić.
             LoadImagesWithSpecifiedSize();
+            OldRectangle = new Rectangle(ptr_pos, new Size(_img_files[^1].Width, _img_files[^1].Height));
             Invalidate();
         }
 
         protected override void OnPaint(PaintEventArgs pe)
         {
             base.OnPaint(pe);
-            Rectangle clip_rect = pe.ClipRectangle;
             try
             {
                 if (_img_files.Count >= 1)
                 {
-                    pe.Graphics.DrawImage(_img_files[0], 0, 0);//Size.Width/2, Size.Height/2);
-                    if (_load_extra) pe.Graphics.DrawImage(_img_files[1], middle_pos.X, middle_pos.Y);
-                    pe.Graphics.TranslateTransform(this.ClientRectangle.Width / 2, this.ClientRectangle.Height / 2);
+                    //pe.Graphics.DrawImage(_img_files[0], 0, 0);
+                    //if (_load_extra) pe.Graphics.DrawImage(_img_files[1], middle_pos.X, middle_pos.Y);
+                    pe.Graphics.DrawImage(_img_files[0].Clone(pe.ClipRectangle, _img_files[0].PixelFormat), pe.ClipRectangle.Left, pe.ClipRectangle.Top);
+                    //if (_load_extra)
+                    //{
+                    //    Rectangle r = new Rectangle(middle_pos, new Size(_img_files[1].Width, _img_files[1].Height));
+                    //    if (r.IntersectsWith(pe.ClipRectangle))
+                    //    {
+                    //        r.Intersect(pe.ClipRectangle);
+                    //        pe.Graphics.DrawImage(_img_files[1].Clone(r, _img_files[1].PixelFormat), r.Left, r.Top);
+                    //    }
+                    //}
+                    //using (var p = new Pen(Brushes.Red, 3))
+                    //    pe.Graphics.DrawRectangle(p, pe.ClipRectangle);
+                    pe.Graphics.TranslateTransform(ClientRectangle.Width / 2, ClientRectangle.Height / 2);
                     pe.Graphics.RotateTransform(where);
-                    pe.Graphics.DrawImage(_img_files[^1], - this.ClientRectangle.Width / 2 + ptr_pos.X, -this.ClientRectangle.Height / 2 + ptr_pos.Y);
+                    //pe.Graphics.TranslateTransform(0.0f,0.0f);
+                    pe.Graphics.DrawImage(_img_files[^1], ptr_pos.X - ClientRectangle.Width / 2, ptr_pos.Y - ClientRectangle.Height / 2);
+                    //using (var p = new Pen(Brushes.Red, 3))
+                    //    pe.Graphics.DrawRectangle(p, pe.ClipRectangle);
+
                 }
             }
             catch
             {
             }
+            finally { pe.Graphics.Dispose(); }
         }
         /* Function which optimize size of needed bitmap 
          * Here is process of deleting alpha channel from image.

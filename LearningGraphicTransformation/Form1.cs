@@ -12,7 +12,7 @@ namespace LearningGraphicTransformation
 {
     public partial class Form1 : Form
     {
-        int i = 0;
+        float i = 0;
         public Form1()
         {
             InitializeComponent();
@@ -20,14 +20,19 @@ namespace LearningGraphicTransformation
 
         private void button1_Click(object sender, EventArgs e)
         {
-            i += 2;
-            vMeter1.ChangePos(i);
+            i += 1f;
+            vMeter1.SetPosition(i);
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            i -= 2;
-            vMeter1.ChangePos(i);
+            i -= 1f;
+            vMeter1.SetPosition(i);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            vMeter1.Invalidate();
         }
     }
 }
