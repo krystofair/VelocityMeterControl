@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
 
 namespace LearningGraphicTransformation
 {
@@ -24,7 +25,7 @@ namespace LearningGraphicTransformation
         {
             Invalidate(OldRectangle);
             where = value % 360;
-            OldRectangle = CalcDrawingRectangle();
+            OldRectangle = CalcDrawingAreaForPointer();
             //Invalidate(OldRectangle);
         }
 
@@ -88,46 +89,30 @@ namespace LearningGraphicTransformation
                 Debug.WriteLine("[DEBUG] " + e.Message);
             }
         }
-        protected Rectangle CalcDrawingRectangle()
+        protected Rectangle CalcDrawingAreaForPointer()
         {
             if (_img_files.Count < 2) return ClientRectangle;
-            Rectangle re;
-            double w = _img_files[^1].Width;
-            double h = _img_files[^1].Height;
-            // the origin coordinates.
-            double x0 = ClientRectangle.Width/2;
-            double y0 = ClientRectangle.Height/2;
-
-            // points to rotate with normalization
-            double[,] points = {
-                { ptr_pos.X-x0, ptr_pos.Y-y0 },
-                { ptr_pos.X-x0, ptr_pos.Y+h-y0 },
-                { ptr_pos.X+w-x0, ptr_pos.Y-y0 },
-                { ptr_pos.X+h-x0, ptr_pos.Y+h-y0 }
+            Rectangle re = new Rectangle(); // clip rectangle to return.
+            re.Width = _img_files[^1].Width;
+            re.Height = _img_files[^1].Height;
+            Point[] points = {
+                new Point(ptr_pos.X, ptr_pos.Y),
+                new Point(ptr_pos.X, ptr_pos.Y+re.Height),
+                new Point(ptr_pos.X+re.Width, ptr_pos.Y),
+                new Point(ptr_pos.X+re.Width, ptr_pos.Y+re.Height)
             };
-            List<double> xs = new List<double>();
-            List<double> ys = new List<double>();
-
-            for (int i = 0; i < 4; ++i)
-            {
-                // calc points after rotations and moves.
-                xs.Add(points[i, 0] * Math.Cos(where/10) + points[i, 1] * Math.Sin(where/10));
-                ys.Add(points[i, 0] * Math.Sin(where/10) - points[i, 1] * Math.Cos(where/10));
-                xs[^1] += x0;
-                ys[^1] += y0;
-            }
-            xs.Sort();
-            ys.Sort();
-            // clip rectangle to return.
-            re = new Rectangle((int)xs[0], (int)ys[0], (int)Math.Abs(xs[^1] - xs[0]), (int)Math.Abs(ys[^1] - ys[0]));
-
-            using (Pen p = new Pen(Brushes.Yellow, 2))
-            {
-                var g = CreateGraphics();
-                g.DrawRectangle(p, re);
-                Debug.WriteLine(re.ToString());
-                g.Dispose();
-            }
+            Matrix m = new Matrix();
+            m.RotateAt(this.where, new Point(ClientRectangle.Width / 2, ClientRectangle.Height / 2));
+            m.TransformPoints(points);
+            m.Dispose();
+            List<Point> l = new List<Point>(points); // list of points to easy sort.
+            
+            l.Sort((b,a) => { return a.X - b.X; }); // sort by Xs.
+            re.Width = l[^1].X - l[0].X; // max width of new rectangle.
+            re.X = l[0].X;
+            l.Sort((b, a) => { return a.Y - b.Y; }); // sort by Ys.
+            re.Y = l[0].Y;
+            re.Height = l[^1].Y - l[0].Y; // max height of new rectangle.
             return re;
         }
         protected override void OnSizeChanged(EventArgs e)
@@ -158,15 +143,12 @@ namespace LearningGraphicTransformation
                     //        pe.Graphics.DrawImage(_img_files[1].Clone(r, _img_files[1].PixelFormat), r.Left, r.Top);
                     //    }
                     //}
-                    //using (var p = new Pen(Brushes.Red, 3))
-                    //    pe.Graphics.DrawRectangle(p, pe.ClipRectangle);
                     pe.Graphics.TranslateTransform(ClientRectangle.Width / 2, ClientRectangle.Height / 2);
                     pe.Graphics.RotateTransform(where);
                     //pe.Graphics.TranslateTransform(0.0f,0.0f);
                     pe.Graphics.DrawImage(_img_files[^1], ptr_pos.X - ClientRectangle.Width / 2, ptr_pos.Y - ClientRectangle.Height / 2);
                     //using (var p = new Pen(Brushes.Red, 3))
                     //    pe.Graphics.DrawRectangle(p, pe.ClipRectangle);
-
                 }
             }
             catch
