@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using System.Diagnostics;
+using System.Threading;
 
 namespace LearningGraphicTransformation
 {
@@ -33,6 +28,30 @@ namespace LearningGraphicTransformation
         private void button3_Click(object sender, EventArgs e)
         {
             vMeter1.Invalidate();
+            this.Run();
+        }
+        public void Run()
+        {
+            BackgroundWorker bw = new BackgroundWorker();
+            bw.DoWork += new DoWorkEventHandler((object o, DoWorkEventArgs dwea) => {
+                for (float p = 0; ;)
+                {
+                    while (p < 270)
+                    {
+                        vMeter1.SetPosition(p);
+                        Thread.Sleep(10);
+                        p += 1f;
+                    }
+                    while (p > 0)
+                    {
+                        vMeter1.SetPosition(p);
+                        Thread.Sleep(10);
+                        p -= 1f;
+                    }
+                    Thread.Sleep(2000);
+                }
+            });
+            bw.RunWorkerAsync();
         }
     }
 }

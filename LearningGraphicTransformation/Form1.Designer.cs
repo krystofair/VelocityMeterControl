@@ -37,7 +37,7 @@ namespace LearningGraphicTransformation
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(728, 11);
+            this.button1.Location = new System.Drawing.Point(453, 207);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(82, 35);
             this.button1.TabIndex = 1;
@@ -47,7 +47,7 @@ namespace LearningGraphicTransformation
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(728, 52);
+            this.button2.Location = new System.Drawing.Point(453, 248);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(82, 34);
             this.button2.TabIndex = 2;
@@ -59,15 +59,15 @@ namespace LearningGraphicTransformation
             // 
             this.vMeter1.BackColor = System.Drawing.Color.Black;
             this.vMeter1.LoadExtra = true;
-            this.vMeter1.Location = new System.Drawing.Point(24, 12);
+            this.vMeter1.Location = new System.Drawing.Point(12, 12);
             this.vMeter1.Name = "vMeter1";
-            this.vMeter1.Size = new System.Drawing.Size(534, 534);
+            this.vMeter1.Size = new System.Drawing.Size(435, 435);
             this.vMeter1.TabIndex = 6;
             this.vMeter1.Text = "vMeter1";
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(728, 92);
+            this.button3.Location = new System.Drawing.Point(453, 288);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(82, 34);
             this.button3.TabIndex = 7;
@@ -79,7 +79,7 @@ namespace LearningGraphicTransformation
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(822, 604);
+            this.ClientSize = new System.Drawing.Size(684, 476);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.vMeter1);
             this.Controls.Add(this.button2);
