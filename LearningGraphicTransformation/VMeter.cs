@@ -15,7 +15,7 @@ namespace LearningGraphicTransformation
     {
         private List<Bitmap> _img_files = new List<Bitmap>();
         public event PropertyChangedEventHandler ExtraChange;
-        private bool _load_extra = false;
+        private bool _load_extra;
         private Point ptr_pos;
         private Point middle_pos;
         private Rectangle OldRectangle;
@@ -26,9 +26,11 @@ namespace LearningGraphicTransformation
             Invalidate(OldRectangle);
             where = value % 360;
             OldRectangle = CalcDrawingAreaForPointer();
-            //Invalidate(OldRectangle);
         }
-
+        public float GetPosition()
+        {
+            return where;
+        }
 
         public bool LoadExtra
         {
@@ -62,8 +64,25 @@ namespace LearningGraphicTransformation
         }
         private void OnExtraChanged(object sender, PropertyChangedEventArgs e)
         {
+            if (!_load_extra)
+            {
+                if (_img_files.Count > 2)
+                    _img_files.RemoveAt(1);
+            }
+            else
+            {
+                if (_img_files.Count >= 1)
+                {
+                    int sx = (int)((this.Size.Width / (float)_img_files[0].Width) * _img_files[0].Width);
+                    int sy = (int)((this.Size.Width / (float)_img_files[0].Height) * _img_files[0].Height);
+                    Bitmap extra_bmp = new Bitmap(Properties.Resources.middle, new Size(sx, sy));
+                    middle_pos = CropBMPToNoAlpha(ref extra_bmp);
+                    _img_files.Insert(1, extra_bmp);
+                }
+            }
+            Invalidate();
         }
-
+        [DesignOnly(true)]
         private void LoadImagesWithSpecifiedSize()
         {
             _img_files.Clear();
@@ -74,12 +93,6 @@ namespace LearningGraphicTransformation
                 int sy = (int)((this.Size.Width / (float)base_bp.Height) * base_bp.Height);
                 _img_files.Add(new Bitmap(base_bp, new Size((int)sx, (int)sy)));
                 base_bp.Dispose();
-                if (_load_extra)
-                {
-                    base_bp = new Bitmap(Properties.Resources.middle, new Size(sx, sy));
-                    middle_pos = CropBMPToNoAlpha(ref base_bp);
-                    _img_files.Add(base_bp);
-                }
                 base_bp = new Bitmap(Properties.Resources.pointer, new Size(sx, sy));
                 ptr_pos = CropBMPToNoAlpha(ref base_bp);
                 _img_files.Add(base_bp);
@@ -89,7 +102,7 @@ namespace LearningGraphicTransformation
                 Debug.WriteLine("[DEBUG] " + e.Message);
             }
         }
-        protected Rectangle CalcDrawingAreaForPointer()
+        protected Rectangle CalcDrawingAreaForPointer(int padding = 5)
         {
             if (_img_files.Count < 2) return ClientRectangle;
             Rectangle re = new Rectangle(); // clip rectangle to return.
@@ -120,6 +133,7 @@ namespace LearningGraphicTransformation
             base.OnSizeChanged(e);
             this.Size = new Size(this.Size.Width, this.Size.Width); // potem poprawić.
             LoadImagesWithSpecifiedSize();
+            OnExtraChanged(this, null);
             OldRectangle = new Rectangle(ptr_pos, new Size(_img_files[^1].Width, _img_files[^1].Height));
             Invalidate();
         }
@@ -131,30 +145,35 @@ namespace LearningGraphicTransformation
             {
                 if (_img_files.Count >= 1)
                 {
-                    //pe.Graphics.DrawImage(_img_files[0], 0, 0);
-                    //if (_load_extra) pe.Graphics.DrawImage(_img_files[1], middle_pos.X, middle_pos.Y);
+                    // Here fragment of the shield is being drawn, which was passed to invalidate method.
                     pe.Graphics.DrawImage(_img_files[0].Clone(pe.ClipRectangle, _img_files[0].PixelFormat), pe.ClipRectangle.Left, pe.ClipRectangle.Top);
-                    //if (_load_extra)
-                    //{
-                    //    Rectangle r = new Rectangle(middle_pos, new Size(_img_files[1].Width, _img_files[1].Height));
-                    //    if (r.IntersectsWith(pe.ClipRectangle))
-                    //    {
-                    //        r.Intersect(pe.ClipRectangle);
-                    //        pe.Graphics.DrawImage(_img_files[1].Clone(r, _img_files[1].PixelFormat), r.Left, r.Top);
-                    //    }
-                    //}
+                    if (_load_extra) pe.Graphics.DrawImage(_img_files[1], middle_pos.X, middle_pos.Y);
+                    /* Code below has flaw as OutOfMemory exception.
+                    * if (_load_extra)
+                    * {
+                    *     Rectangle r = new Rectangle(middle_pos, new Size(_img_files[1].Width, _img_files[1].Height));
+                    *     if (r.IntersectsWith(pe.ClipRectangle))
+                    *     {
+                    *         r.Intersect(pe.ClipRectangle);
+                    *         pe.Graphics.DrawImage(_img_files[1].Clone(r, _img_files[1].PixelFormat), r.Left, r.Top);
+                    *     }
+                    * }
+                    */
+                    // Move image for new origin
                     pe.Graphics.TranslateTransform(ClientRectangle.Width / 2, ClientRectangle.Height / 2);
+                    // Rotate image in it
                     pe.Graphics.RotateTransform(where);
-                    //pe.Graphics.TranslateTransform(0.0f,0.0f);
+                    // Draw image on old position, that's why there are set new coords.
                     pe.Graphics.DrawImage(_img_files[^1], ptr_pos.X - ClientRectangle.Width / 2, ptr_pos.Y - ClientRectangle.Height / 2);
-                    //using (var p = new Pen(Brushes.Red, 3))
-                    //    pe.Graphics.DrawRectangle(p, pe.ClipRectangle);
                 }
             }
             catch
             {
             }
-            finally { pe.Graphics.Dispose(); }
+            finally
+            {
+                pe.Graphics.Dispose();
+            }
         }
         /* Function which optimize size of needed bitmap 
          * Here is process of deleting alpha channel from image.
