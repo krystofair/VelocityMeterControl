@@ -11,6 +11,8 @@ namespace LearningGraphicTransformation
         public Form1()
         {
             InitializeComponent();
+            vMeter1.AddStartPoint(0);
+            vMeter1.AddStartPoint(10);
         }
 
         private void button1_Click(object sender, EventArgs e)
