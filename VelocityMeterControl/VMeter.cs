@@ -8,7 +8,7 @@ using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
 using System.Collections;
 
-namespace LearningGraphicTransformation
+namespace VelocityMeterControl
 {
     /*
       * TODO:
@@ -97,7 +97,7 @@ namespace LearningGraphicTransformation
                 {
                     int sx = (int)((this.Size.Width / (float)_img_files[0].Width) * _img_files[0].Width);
                     int sy = (int)((this.Size.Width / (float)_img_files[0].Height) * _img_files[0].Height);
-                    Bitmap extra_bmp = new Bitmap(Properties.Resources.middle, new Size(sx, sy));
+                    Bitmap extra_bmp = new Bitmap(Resources.middle, new Size(sx, sy));
                     middle_pos = CropBMPToNoAlpha(ref extra_bmp);
                     _img_files.Insert(1, extra_bmp);
                     start_extra = new List<float>();
@@ -111,12 +111,12 @@ namespace LearningGraphicTransformation
             _img_files.Clear();
             try
             {
-                Bitmap base_bp = new Bitmap(Properties.Resources._base);
+                Bitmap base_bp = new Bitmap(Resources._base);
                 int sx = (int)((this.Size.Width / (float)base_bp.Width) * base_bp.Width);
                 int sy = (int)((this.Size.Width / (float)base_bp.Height) * base_bp.Height);
                 _img_files.Add(new Bitmap(base_bp, new Size((int)sx, (int)sy)));
                 base_bp.Dispose();
-                base_bp = new Bitmap(Properties.Resources.pointer, new Size(sx, sy));
+                base_bp = new Bitmap(Resources.pointer, new Size(sx, sy));
                 ptr_pos = CropBMPToNoAlpha(ref base_bp);
                 _img_files.Add(base_bp);
             }
@@ -159,7 +159,8 @@ namespace LearningGraphicTransformation
             this.Size = new Size(this.Size.Width, this.Size.Width); // potem poprawić.
             LoadImagesWithSpecifiedSize();
             OnExtraChanged(this, null);
-            OldRectangle = new Rectangle(ptr_pos, new Size(_img_files[^1].Width, _img_files[^1].Height));
+            if(_img_files.Count > 1)
+                OldRectangle = new Rectangle(ptr_pos, new Size(_img_files[^1].Width, _img_files[^1].Height));
             Invalidate();
         }
 

@@ -1,5 +1,5 @@
 ﻿
-namespace LearningGraphicTransformation
+namespace VelocityMeterControl
 {
     partial class VMeter
     {
