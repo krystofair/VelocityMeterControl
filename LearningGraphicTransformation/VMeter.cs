@@ -121,7 +121,8 @@ namespace LearningGraphicTransformation
             this.Size = new Size(this.Size.Width, this.Size.Width); // potem poprawić.
             LoadImagesWithSpecifiedSize();
             OnExtraChanged(this, null);
-            OldRectangle = new Rectangle(ptr_pos, new Size(_img_files[^1].Width, _img_files[^1].Height));
+            if(_img_files.Count > 1)
+                OldRectangle = new Rectangle(ptr_pos, new Size(_img_files[^1].Width, _img_files[^1].Height));
             Invalidate();
         }
 
