@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.Drawing.Imaging;
@@ -37,31 +35,19 @@ namespace LearningGraphicTransformation
             set { _load_extra = value; ExtraChange.Invoke(this, new PropertyChangedEventArgs("LoadExtra")); }
             get { return _load_extra; }
         }
-        public Bitmap GetBase()
-        {
-            if (_img_files.Count >= 1) return _img_files[0];
-            else return null;
-        }
-        public Bitmap GetPointer()
-        {
-            if (_img_files.Count >= 2) return _img_files[^1];
-            else return null;
-        }
-        public Bitmap GetExtra()
-        {
-            if (_img_files.Count == 3) return _img_files[1];
-            else return null;
-        }
+
         protected override Size DefaultSize
         {
             get { return new Size(200, 200); }
         }
+
         public VMeter()
         {
             InitializeComponent();
             BackColor = Color.Black;
             ExtraChange = new PropertyChangedEventHandler(OnExtraChanged);
         }
+
         private void OnExtraChanged(object sender, PropertyChangedEventArgs e)
         {
             if (!_load_extra)
@@ -82,6 +68,7 @@ namespace LearningGraphicTransformation
             }
             Invalidate();
         }
+
         [DesignOnly(true)]
         private void LoadImagesWithSpecifiedSize()
         {
